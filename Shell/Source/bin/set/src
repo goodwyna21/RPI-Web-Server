@@ -1,0 +1,18 @@
+if(comm.at(0)=="set"){
+    if(comm.size()<3){
+        log << "Error: Invalid arguments\nExpected like 'set VAR value'\n";
+        return false;
+    }
+    if(comm.at(1)[0]=='$'){
+        comm.at(1)=comm.at(1).substr(1,comm.at(1).size()-1);
+    }
+    var * v = ((*this)%=comm.at(1));
+    if(v==nullptr){
+        v = new var;
+        v->id = comm.at(1);
+        vars.push_back(v);
+    }
+
+    (v->text) = comm.at(2);
+    return true;
+}

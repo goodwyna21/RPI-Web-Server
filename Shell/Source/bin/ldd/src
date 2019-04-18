@@ -1,0 +1,46 @@
+if(comm.at(0)=="ldd"){ //ldd .dir
+    if(comm.size()<2){
+        log << "Error: Improper arguments\nExpected like 'ldd FNAME.dir'\n";
+        return false;
+    }
+    string fname = comm.at(1).substr(0,(comm.at(1).size()-4));
+    ifstream tree(fname + ".dir/" + fname + ".tree");
+    if(tree.fail()){
+        log << "Error: Invalid file '" << comm.at(1) << "'\n";
+        return false;
+    }
+
+    //clear root
+    ++(*this);
+    vector<dir * > dirs = ((*pos)||"*");
+    for(vector<dir * >::iterator it = dirs.begin(); it!=dirs.end(); ++it){
+        (*pos)-(*it);
+    }
+    vector<file * > files = ((*pos)|"*");
+    for(vector<file * >::iterator it = files.begin(); it!=files.end(); ++it){
+        (*pos)-(*it);
+    }
+
+    string line;
+    file * f_tmp;
+    ifstream rf;
+    getline(tree,line);//ignore root
+    while(getline(tree,line)){
+        if(line[0]=='@'){
+            pos = ((*pos)<<(line.substr(1,line.size()-2)));
+        }
+        if(line[0]=='!'){
+            f_tmp = ((*pos)+=(line.substr(1,line.size()-1)));
+            rf.open(fname+".dir/"+(f_tmp->name)+".data");
+            (*f_tmp)<<rf;
+            rf.close();
+        }
+        if(line[0]=='}'){
+            if(pos->up != nullptr){
+                pos = pos->up;
+            }
+        }
+    }
+    tree.close();
+    return true;
+}

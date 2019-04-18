@@ -1,0 +1,4 @@
+if(comm.at(0)=="echo"){
+    p << combine(sub<string>(comm,1)," ") << "\n";
+    return true;
+}

@@ -1,0 +1,9 @@
+if(comm.at(0)[0]=='$'){
+    var * v = (*this)%=(comm.at(0).substr(1,comm.at(0).size()-1));
+    if(v==nullptr){
+        log << "Error: No variable '" << comm.at(0) << "'\n";
+        return false;
+    }
+    p << ((*this)%=(comm.at(0).substr(1,comm.at(0).size()-1)))->text << "\n";
+    return true;
+}

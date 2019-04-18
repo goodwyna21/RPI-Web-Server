@@ -1,0 +1,8 @@
+if(comm.at(0)=="setusr"){ //setusr NAME
+    if(comm.size() < 2){
+        log << "Error: Improper arguments\nExpected like 'setusr NAME'\n";
+        return false;
+    }
+    (*this)<=comm.at(1);
+    return true;
+}

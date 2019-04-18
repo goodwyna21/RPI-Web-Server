@@ -1,0 +1,12 @@
+if(comm.at(0)=="rmdir"){//rmdir DNAME
+    if(comm.size() < 2){
+        log << "Error: Improper arguments\nExpected like 'rmdir DNAME'\n";
+        return false;
+    }
+    if(((*pos)||comm.at(1)) == nullptr){
+        log << "Error: No directory '" << comm.at(1) << "'\n";
+        return false;
+    }
+    (*pos)-((*pos)||comm.at(1));
+    return true;
+}

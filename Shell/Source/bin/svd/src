@@ -1,0 +1,33 @@
+if(comm.at(0)=="svd"){ //save directory: svd [PATH]
+    dir * d;
+    if(comm.size()<2){
+        d = pos;
+    }else{
+        d = ((*this)||comm.at(2));
+    }
+    string dname = "@" + d->name;
+    string path = dname + ".dir/";
+    system(("mkdir -p " + path + " > /dev/null").c_str());
+
+    ofstream wf;
+    wf.open((path + dname + ".tree"));
+    string text = ((*d)^0);
+    for(int i = 0; i < text.size(); i++){
+        if(text[i]=='\t'){
+            text.erase(i,1);
+            i--;
+        }
+    }
+    wf << text;
+    wf.close();
+
+    vector<file *> files;
+    files = ((*d) %= "*");
+    for(vector<file *>::iterator it = files.begin(); it!=files.end(); ++it){
+        wf.open(path + ((*it)->name) + ".data");
+        (**it) *= &text;
+        wf << text;
+        wf.close();
+    }
+    return true;
+}

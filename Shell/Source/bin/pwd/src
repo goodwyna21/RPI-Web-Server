@@ -1,0 +1,4 @@
+if(comm.at(0)=="pwd"){
+    p << b_on << pos->path << b_off << "\n";
+    return true;
+}

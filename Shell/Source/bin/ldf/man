@@ -1,0 +1,1 @@
+ldf FNAME REAL_FILE_PATH - copy data from file REAL_FILE_PATH in host to FNAME, create FNAME if nonexistent

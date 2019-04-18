@@ -1,0 +1,6 @@
+if(comm.at(0)=="vars"){
+    for(vector<var *>::iterator it=vars.begin(); it!=vars.end(); ++it){
+        p << ((*it)->id + " : " + escape((*it)->text) + "\n");
+    }
+    return true;
+}

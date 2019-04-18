@@ -1,0 +1,8 @@
+if(comm.at(0)=="ls"){
+    if(comm.size()<2){
+        p << (*pos) << "\n";
+        return true;
+    }
+    p << (*((*this)||comm.at(1))) << "\n";
+    return true;
+}

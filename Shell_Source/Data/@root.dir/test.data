@@ -1,7 +1,0 @@
-mkdir etc
-cd etc
-mkdir bin
-cd bin
-touch hello
-write hello hey! heres some words
-cat hello

@@ -1,0 +1,14 @@
+if(comm.at(0)=="mkdir"){
+    if(comm.size()<2){
+        log << "Error: Improper arguments\nExpected like 'mkdir DNAME'\n";
+        return false;
+    }
+    if((*this)||comm.at(1)){
+        log << ("Error: '" + comm.at(1) + "' already exists\n");
+        return false;
+    }
+
+    (*pos) << comm.at(1);
+
+    return true;
+}

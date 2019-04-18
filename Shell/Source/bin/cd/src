@@ -1,0 +1,11 @@
+if(comm.at(0)=="cd"){
+    if(comm.size()<2){
+        log << "Error: Improper arguments\nExpected like 'cd PATH'\n";
+        return false;
+    }
+    if(!((*this)-comm.at(1))){
+        log << "Error: Invalid path '" << comm.at(1) << "'\n";
+        return false;
+    }
+    return true;
+}

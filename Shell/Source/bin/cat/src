@@ -1,0 +1,15 @@
+if(comm.at(0)=="cat"){ //cat FNAME
+    if(comm.size() < 2){
+        log << "Error: Improper arguments\nExpected like 'cat FNAME'\n";
+        return false;
+    }
+    string text;
+    file * f = (*pos)|comm.at(1);
+    if(f==nullptr){
+        log << "Error: Invalid filename\n";
+        return false;
+    }
+    (*f) *= &text;
+    p << text << "\n";
+    return true;
+}

@@ -1,0 +1,15 @@
+if(comm.at(0)=="sf"){ //save file
+    if(comm.size() < 3){
+        log << "Error: Improper arguments\nExpected like 'sf FNAME saveLocation'\n";
+        return false;
+    }
+    if(((*pos)|comm.at(1)) == nullptr){
+        log << "Error: Invalid file '" << comm.at(1) << "'\n";
+        return false;
+    }
+    ofstream wf;
+    file * f = ((*pos)|comm.at(1));
+    wf.open(comm.at(2));
+    (*f) >> (&wf);
+    return false;
+}

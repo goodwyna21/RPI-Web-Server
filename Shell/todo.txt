@@ -1,0 +1,7 @@
+man pages / add options
+grep
+input
+vars as parameters
+mv 
+generalize functions
+environment variables

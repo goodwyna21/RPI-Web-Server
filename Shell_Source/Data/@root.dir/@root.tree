@@ -1,8 +1,0 @@
-@root{
-@etc{
-@bin{
-!hello
-}
-}
-!test
-}

@@ -1,0 +1,6 @@
+av VARNAME - access variable VARNAME
+
+returns value of VARNAME
+
+Options:
+[-v] if silent buffer has data, write it to VARNAME

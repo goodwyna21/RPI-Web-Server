@@ -1,0 +1,2 @@
+cat FNAME - output contents of file
+FNAME can be path to file

@@ -1,0 +1,22 @@
+if(comm.at(0)=="exec"){ //execute script
+    if(comm.size() < 2){
+        log << "Error: Improper arguments\nExpected like 'exec FNAME'\n";
+        return false;
+    }
+    if(((*pos)|comm.at(1))==nullptr){
+        log << "Error: Invalid file '" << comm.at(1) << "'\n";
+        return false;
+    }
+    file * f = ((*pos)|comm.at(1));
+    string line;
+    ++(*f);
+    (*f)%=line;
+    do{
+        if(!((*this)<<line)){
+            log << "in '" << line << "'\n";
+            return false;
+        }
+        (*f)%=line;
+    }while(line!="");
+    return true;
+}

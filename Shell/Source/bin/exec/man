@@ -1,0 +1,2 @@
+exec FNAME - execute FNAME as a series of shell commands
+each line is one command

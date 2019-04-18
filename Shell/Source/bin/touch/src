@@ -1,0 +1,12 @@
+if(comm.at(0)=="touch"){
+    if(comm.size()<2){
+        log << "Error: Improper arguments\nExpected like 'touch FNAME'\n";
+        return false;
+    }
+    if(((*pos)|comm.at(1)) != nullptr){
+        log << "Error: '" << comm.at(1) << "' already exists.";
+        return false;
+    }
+    (*pos) += comm.at(1);
+    return true;
+}

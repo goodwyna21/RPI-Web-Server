@@ -1,0 +1,24 @@
+if(comm.at(0)=="write"){ //write FNAME DATA
+    if(comm.size() < 3){
+        log << "Error: Improper arguments\nExpected like 'write FNAME TEXT'\n";
+        return false;
+    }
+    file * f = (*pos)|comm.at(1);
+    if(f == nullptr){
+        log << "Error: Invalid filename\n";
+        return false;
+    }
+    vector<string>::iterator d_start = comm.begin();
+    ++d_start;
+    ++d_start;
+    string data = "";
+    for(vector<string>::iterator it = d_start; it!=comm.end(); ){
+        data += (*it);
+        ++it;
+        if(it!=comm.end()){
+            data += " ";
+        }
+    }
+    (*f) << data;
+    return true;
+}

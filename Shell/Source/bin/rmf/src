@@ -1,0 +1,12 @@
+if(comm.at(0)=="rmf"){
+    if(comm.size() < 2){
+        log << "Error: Improper arguments\nExpected like 'rmf FNAME'\n";
+        return false;
+    }
+    if(((*pos)|comm.at(1))==nullptr){
+        log << "Error: Invalid file '" << comm.at(1) << "'\n";
+        return false;
+    }
+    (*pos)-((*pos)|comm.at(1));
+    return true;
+}
