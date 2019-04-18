@@ -1,0 +1,2 @@
+touch badabing
+cat script | write badabing
