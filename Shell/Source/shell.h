@@ -17,26 +17,56 @@ struct var{
     }
 };
 
+struct ret_val{
+    string data;
+    printer p;
+    bool success;
+    ret_val(){
+        data = "";
+        success = true;
+        p || false;
+    }
+    ret_val(bool b){ //failure
+        data = "";
+        success = b;
+        p || false;
+    }
+    
+    template <typename T>
+    ret_val operator<<(T foo){
+        p << foo;
+        string temp;
+        p >> temp;
+        data += temp;
+        return *this;
+    }
+    
+    void operator>>(string &s){
+        s += data;
+        data = "";
+    }
+};
+
+ret_val FAIL(false);
+
+vector<string> sep_comm(string s, vector<char> &opts); //forward declaration for neatness
+
 struct shell{
     string user;
     dir * pos;
-    printer p;
+    printer print;
     printer log;
     vector<var *> vars;
     
-    void operator~(){
+    shell(){
         pos = new dir;
         pos->name = "root";
         pos->up = nullptr;
         ~(*pos);
         user = "root";
-        
     }
     void operator<=(string u){
         user = u;
-    }
-    void operator% (printer print){
-        p = print;
     }
     
     shell operator+(){
@@ -98,7 +128,10 @@ struct shell{
         pos = spot;
         return temp;
     }
-    var * operator%=(string s){
+    var * operator%=(string s){ //return var with id s
+        if(s[0]=='$'){
+            s=s.substr(1,s.size()-1); //string leading $
+        }
         for(int i = 0; i < vars.size(); i++){
             if(vars.at(i)->id == s){
                 return vars.at(i);
@@ -111,7 +144,8 @@ struct shell{
      */
     
     
-    bool operator() (vector<string> comm, vector<char> opts){
+    ret_val operator() (vector<string> comm, vector<char> opts){
+        ret_val RET;
         if(comm.at(0)=="ls"){
             dir * d;
             if(comm.size()<2){
@@ -120,66 +154,63 @@ struct shell{
                 d = ((*this)||comm.at(1));
             }
             if(!has<char>(opts,'p')){
-                p << b_on << d->path << b_off << "\n";
+                RET << b_on << d->path << b_off << "\n";
             }
             
             
-            string ret;
+            string tmp;
             if(!has<char>(opts,'r')){
-                ret = "";
+                tmp = "";
                 int cnt = 0;
                 for(vector<dir *>::iterator it = d->dirs.begin(); it != d->dirs.end(); ++it){
                     cnt++;
                     if((cnt > 4 || has<char>(opts,'c')) && it!=d->dirs.begin()){
-                        ret += "\n";
+                        tmp += "\n";
                         cnt = 0;
                     }
-                    ret += "@" + (*it)->name + "  ";
+                    tmp += "@" + (*it)->name + "  ";
                 }
                 for(vector<file *>::iterator it = d->files.begin(); it != d->files.end(); ++it){
                     cnt++;
                     if(cnt > 4 || has<char>(opts,'c')){
-                        ret += "\n";
+                        tmp += "\n";
                         cnt = 0;
                     }
-                    ret += "!" + (*it)->name + "  ";
+                    tmp += "!" + (*it)->name + "  ";
                 }
             } else {
-                ret = ((*d)^0);
+                tmp = ((*d)^0);
                 if(has<char>(opts,'n')){
-                    remove(ret,"\n");
+                    remove(tmp,"\n\t");
                 }
             }
             if(has<char>(opts,'t')){
-                remove(ret,"@!");
+                remove(tmp,"@!");
             }
-            p << ret << "\n";
-            return true;
+            RET << tmp << ((tmp!="\n")?"\n":"");
+            return RET;
         }
         if(comm.at(0)=="pwd"){
-            p << b_on << pos->path << b_off << "\n ";
-            return true;
+            RET << b_on << pos->path << b_off << "\n ";
+            return RET;
         }
         if(comm.at(0)=="cd"){
-            bp("cd");
             if(comm.size()<2){
-                throw "cd error";
-                log << "Error: Improper arguments\nExpected like 'cd PATH'\n";
-                return false;
+                FAIL << "Error: Improper arguments\nExpected like 'cd PATH'\n";
+                return FAIL;
             }
             if(!((*this)-comm.at(1))){
-                bp("cd?");
-                log << "Error: Invalid path '" << comm.at(1) << "'\n";
-                return false;
+                FAIL << "Error: Invalid path '" << comm.at(1) << "'\n";
+                return FAIL;
             }
-            return true;
+            return RET;
         }
         if(comm.at(0)=="echo"){
             if(comm.size()>=2){
-                p << comm.at(1);
+                RET << comm.at(1);
             }
-            p << (has<char>(opts,'n')?"":"\n");
-            return true;
+            RET << (has<char>(opts,'n')?"":"\n");
+            return RET;
         }
         if(comm.at(0)=="svd"){ //save directory: svd [path] [fname]
             dir * d;
@@ -217,18 +248,18 @@ struct shell{
                 wf << text;
                 wf.close();
             }
-            return true;
+            return RET;
         }
         if(comm.at(0)=="ldd"){ //ldd .dir
             if(comm.size()<2){
-                log << "Error: Improper arguments\nExpected like 'ldd FNAME.dir'\n";
-                return false;
+                FAIL << "Error: Improper arguments\nExpected like 'ldd FNAME.dir'\n";
+                return FAIL;
             }
             string fname = comm.at(1).substr(0,(comm.at(1).size()-4));
             ifstream tree(fname + ".dir/" + fname + ".tree");
             if(tree.fail()){
-                log << "Error: Invalid file '" << comm.at(1) << "'\n";
-                return false;
+                FAIL << "Error: Invalid file '" << comm.at(1) << "'\n";
+                return FAIL;
             }
 
             //clear root
@@ -263,43 +294,43 @@ struct shell{
                 }
             }
             tree.close();
-            return true;
+            return RET;
         }
         if(comm.at(0)=="mkdir"){
             if(comm.size()<2){
-                log << "Error: Improper arguments\nExpected like 'mkdir DNAME'\n";
-                return false;
+                FAIL << "Error: Improper arguments\nExpected like 'mkdir DNAME'\n";
+                return FAIL;
             }
             if((*this)||comm.at(1)){
-                log << ("Error: '" + comm.at(1) + "' already exists\n");
-                return false;
+                FAIL << ("Error: '" + comm.at(1) + "' already exists\n");
+                return FAIL;
             }
 
             (*pos) << comm.at(1);
 
-            return true;
+            return RET;
         }
         if(comm.at(0)=="touch"){
             if(comm.size()<2){
-                log << "Error: Improper arguments\nExpected like 'touch FNAME'\n";
-                return false;
+                FAIL << "Error: Improper arguments\nExpected like 'touch FNAME'\n";
+                return FAIL;
             }
             if(((*pos)|comm.at(1)) != nullptr){
-                log << "Error: '" << comm.at(1) << "' already exists.";
-                return false;
+                FAIL << "Error: '" << comm.at(1) << "' already exists.";
+                return FAIL;
             }
             (*pos) += comm.at(1);
-            return true;
+            return RET;
         }
         if(comm.at(0)=="write"){ //write FNAME DATA
             if(comm.size() < 3){
-                log << "Error: Improper arguments\nExpected like 'write FNAME TEXT'\n";
-                return false;
+                FAIL << "Error: Improper arguments\nExpected like 'write FNAME TEXT'\n";
+                return FAIL;
             }
             file * f = (*pos)|comm.at(1);
             if(f == nullptr){
-                log << "Error: Invalid filename\n";
-                return false;
+                FAIL << "Error: Invalid filename\n";
+                return FAIL;
             }
             vector<string>::iterator d_start = comm.begin();
             ++d_start;
@@ -313,148 +344,126 @@ struct shell{
                 }
             }
             (*f) << data;
-            return true;
+            return RET;
         }
         if(comm.at(0)=="cat"){ //cat FNAME
             if(comm.size() < 2){
-                log << "Error: Improper arguments\nExpected like 'cat FNAME'\n";
-                return false;
+                FAIL << "Error: Improper arguments\nExpected like 'cat FNAME'\n";
+                return FAIL;
             }
             string text;
             file * f = (*pos)|comm.at(1);
             if(f==nullptr){
-                log << "Error: Invalid filename\n";
-                return false;
+                FAIL << "Error: Invalid filename\n";
+                return FAIL;
             }
             (*f) *= &text;
-            p << text << "\n";
-            return true;
+            RET << text << "\n";
+            return RET;
         }
         if(comm.at(0)=="rmdir"){//rmdir DNAME
             if(comm.size() < 2){
-                log << "Error: Improper arguments\nExpected like 'rmdir DNAME'\n";
-                return false;
+                FAIL << "Error: Improper arguments\nExpected like 'rmdir DNAME'\n";
+                return FAIL;
             }
             if(((*pos)||comm.at(1)) == nullptr){
-                log << "Error: No directory '" << comm.at(1) << "'\n";
-                return false;
+                FAIL << "Error: No directory '" << comm.at(1) << "'\n";
+                return FAIL;
             }
             (*pos)-((*pos)||comm.at(1));
-            return true;
+            return RET;
         }
         if(comm.at(0)=="mvd"){
             if(comm.size() < 3){
-                log << "Error: Improper arguments\nExpected like 'mvd DNAME path'\n";
-                return false;
+                FAIL << "Error: Improper arguments\nExpected like 'mvd DNAME path'\n";
+                return FAIL;
             }
             if(((*pos)||comm.at(1))==nullptr){
-                log << "Error: No directory '" << comm.at(1) << "'\n";
-                return false;
+                FAIL << "Error: No directory '" << comm.at(1) << "'\n";
+                return FAIL;
             }
 
         }
         if(comm.at(0)=="rmf"){
             if(comm.size() < 2){
-                log << "Error: Improper arguments\nExpected like 'rmf FNAME'\n";
-                return false;
+                FAIL << "Error: Improper arguments\nExpected like 'rmf FNAME'\n";
+                return FAIL;
             }
             if(((*pos)|comm.at(1))==nullptr){
-                log << "Error: Invalid file '" << comm.at(1) << "'\n";
-                return false;
+                FAIL << "Error: Invalid file '" << comm.at(1) << "'\n";
+                return FAIL;
             }
             (*pos)-((*pos)|comm.at(1));
-            return true;
+            return RET;
         }
         if(comm.at(0)=="setusr"){ //setusr NAME
             if(comm.size() < 2){
-                log << "Error: Improper arguments\nExpected like 'setusr NAME'\n";
-                return false;
+                FAIL << "Error: Improper arguments\nExpected like 'setusr NAME'\n";
+                return FAIL;
             }
             (*this)<=comm.at(1);
-            return true;
-        }
-        if(comm.at(0)=="editOSX"){ //edit FNAME
-            if(comm.size() < 2){
-                log << "Error: Improper arguments\nExpected like 'edit FNAME'\n";
-                return false;
-            }
-            if(((*pos)|comm.at(1))==nullptr){
-                log << "Error: Invalid file '" << comm.at(1) << "'\n";
-                return false;
-            }
-            file * f = ((*pos)|comm.at(1));
-            ofstream wf;
-            ifstream rf;
-            wf.open("editor.txt");
-            (*f) >> &wf;
-
-            system("open -a TextEdit editor.txt");
-            p << "Continue (Note: save file) >";
-            cin.get();
-
-            rf.open("editor.txt");
-            (*f) << rf;
-            return true;
+            return RET;
         }
         if(comm.at(0)=="exec"){ //execute script
             if(comm.size() < 2){
-                log << "Error: Improper arguments\nExpected like 'exec FNAME'\n";
-                return false;
+                FAIL << "Error: Improper arguments\nExpected like 'exec FNAME'\n";
+                return FAIL;
             }
             if(((*pos)|comm.at(1))==nullptr){
-                log << "Error: Invalid file '" << comm.at(1) << "'\n";
-                return false;
+                FAIL << "Error: Invalid file '" << comm.at(1) << "'\n";
+                return FAIL;
             }
             file * f = ((*pos)|comm.at(1));
             string line;
             ++(*f);
             (*f)%=line;
             do{
-                if(!((*this)<<line)){
-                    log << "in '" << line << "'\n";
-                    return false;
+                ret_val out = (*this)(line);
+                if(!out.success){
+                    FAIL << out.data << "in '" << line << "'\n";
+                    return FAIL;
                 }
                 (*f)%=line;
             }while(line!="");
-            return true;
+            return RET;
         }
         if(comm.at(0)=="ldf"){ //load file
             if(comm.size() < 3){
-                log << "Error: Improper arguments\nExpected like 'ldf FNAME dataFile'\n";
-                return false;
+                FAIL << "Error: Improper arguments\nExpected like 'ldf FNAME dataFile'\n";
+                return FAIL;
             }
             string sys_com = "ls | grep " + comm.at(2) + " > /dev/null";
             ifstream rf(comm.at(2));
             if(rf.fail()){
-                log << "Error: No file '" << comm.at(2) << "'\n";
-                return false;
+                FAIL << "Error: No file '" << comm.at(2) << "'\n";
+                return FAIL;
             }
             if(((*pos)|comm.at(1)) == nullptr){
-                (*this) << ("touch " + comm.at(1));
+                (*this)("touch " + comm.at(1));
             }
             file * f = ((*pos)|comm.at(1));
             (*f) << rf;
-            return true;
+            return RET;
         }
         if(comm.at(0)=="sf"){ //save file
             if(comm.size() < 3){
-                log << "Error: Improper arguments\nExpected like 'sf FNAME saveLocation'\n";
-                return false;
+                FAIL << "Error: Improper arguments\nExpected like 'sf FNAME saveLocation'\n";
+                return FAIL;
             }
             if(((*pos)|comm.at(1)) == nullptr){
-                log << "Error: Invalid file '" << comm.at(1) << "'\n";
-                return false;
+                FAIL << "Error: Invalid file '" << comm.at(1) << "'\n";
+                return FAIL;
             }
             ofstream wf;
             file * f = ((*pos)|comm.at(1));
             wf.open(comm.at(2));
             (*f) >> (&wf);
-            return false;
+            return RET;
         }
         if(comm.at(0)=="set"){
             if(comm.size()<3){
-                log << "Error: Invalid arguments\nExpected like 'set VAR value'\n";
-                return false;
+                FAIL << "Error: Invalid arguments\nExpected like 'set VAR value'\n";
+                return FAIL;
             }
             if(comm.at(1)[0]=='$'){
                 comm.at(1)=comm.at(1).substr(1,comm.at(1).size()-1);
@@ -467,18 +476,25 @@ struct shell{
             }
 
             (v->text) = comm.at(2);
-            return true;
+            return RET;
         }
         if(comm.at(0)=="vars"){
             for(vector<var *>::iterator it=vars.begin(); it!=vars.end(); ++it){
-                p << ((*it)->id + " : " + escape((*it)->text) + "\n");
+                RET << ((*it)->id + " : " + escNewl((*it)->text) + "\n");
             }
-            return true;
+            return RET;
+        }
+        if(comm.at(0)=="sb"){
+            RET << escNewl(print.data) << ((print.data.size()>0)?"\n":"");
+            if(has<char>(opts,'f')){
+                print.data = "";
+            }
+            return RET;
         }
         if(comm.at(0)=="av"){//variable access
             if(comm.size()<2){
-                log << "Error: Improper arguments\nExpected like 'av VAR'\n";
-                return false;
+                FAIL << "Error: Improper arguments\nExpected like 'av VAR'\n";
+                return FAIL;
             }
             var * v = (*this)%=comm.at(1);
             if(v==nullptr){
@@ -487,49 +503,88 @@ struct shell{
                     v->id = comm.at(1);
                     vars.push_back(v);
                 }else{
-                    log << "Error: No variable '" << comm.at(1) << "'\n";
-                    return false;
+                    FAIL << "Error: No variable '" << comm.at(1) << "'\n";
+                    return FAIL;
                 }
             }
             if(has<char>(opts,'v')){
-                if(!p){
-                    p >> v->text;
+                if(!print){
+                    print >> v->text;
                 }
             }
-            
-            p << v->text << "\n";
-            return true;
+            string tmp=v->text;
+            if(has<char>(opts,'n')){
+                tmp = escNewl(tmp);
+            }
+            if(!has<char>(opts,'v')){
+                RET << tmp << (((tmp[tmp.size()-1])!='\n')?"\n":"");
+            }
+            return RET;
         }
-        log << "Error: Unknown operation '" << comm.at(0) << "'\n";
-        return false;
+        
+        FAIL << "Error: Unknown operation '" << comm.at(0) << "'\n";
+        return FAIL;
     }
     
-    bool operator<<(string comm){ //parse command string
-        if(comm == ""){return false;}
+    ret_val operator()(string comm){ //parse command string
+        if(comm == ""){return ret_val(true);}
         int redir = comm.find('>');
         int pipe = comm.find('|');
         int chain = comm.find(';');
         if(redir != string::npos){
-            p || false;
-            (*this) << comm.substr(0,redir);
-            p || true;
-            string retval;
-            p >> retval;
-            (*this) << ("set " + comm.substr(redir+1,comm.size()-redir) + " \"" + retval + "\"");
+            ret_val ret = (*this)(comm.substr(0,redir));
+            if(!ret.success){return ret;}
+            return ((*this)(("set " + comm.substr(redir+1,comm.size()-redir) + " \"" + ret.data + "\"")));
         }else if(pipe != string::npos){
-            p || false;
-            (*this) << comm.substr(0,pipe);
-            p || true;
-            string retval;
-            p >> retval;
-            (*this) << (comm.substr(pipe+1,comm.size()-pipe) + " " + retval);
+            ret_val ret = ((*this)(comm.substr(0,pipe)));
+            if(!ret.success){return ret;}
+            return ((*this)((comm.substr(pipe+1,comm.size()-pipe) + " " + ret.data)));
         }else if(chain != string::npos){
-            (*this) << comm.substr(0,chain);
-            (*this) << comm.substr(chain+1,comm.size()-chain);
+            ret_val ret = (*this)(comm.substr(0,chain));
+            if(!ret.success){return ret;}
+            return ((*this)(comm.substr(chain+1,comm.size()-chain)));
         }else{
             vector<char> opts;
-            return (*this)(sep_comm(comm, opts),opts);
+            return (*this)(this->sep_comm(comm, opts),opts);
         }
+    }
+    
+    vector<string> sep_comm(string inp, vector<char> &opts){
+        vector<string> words;
+        string temp = "";
+        bool inquot = false;
+        for(int i = 0; i < inp.size(); i++){
+            if(inp[i] == '"' && valid(inp,i)){
+                inquot = !inquot;
+                continue;
+            }
+            if(inp[i] == ' ' && valid(inp,i) && !inquot){
+                if(temp[0]=='$'){
+                    words.push_back(((*this)%=temp)->text);
+                    temp="";
+                }
+                if(temp[0]=='-'){
+                    for(int i = 1; i < temp.size(); i++){
+                        opts.push_back(temp[i]);
+                    }
+                    temp="";
+                }
+                if(temp!=""){
+                    words.push_back(temp);
+                    temp="";
+                }
+                continue;
+            }
+            temp+=inp[i];
+        }
+        if(temp[0]=='-'){
+            for(int i = 1; i < temp.size(); i++){
+                opts.push_back(temp[i]);
+            }
+        } else if(temp!=""){
+            words.push_back(temp);
+        }
+        return words;
     }
     
     string operator!(){

@@ -16,13 +16,17 @@
 
 #include "dir.h";
 
+enum p_data {QUIET,LOUD};
+
 class printer{
 public:    
     string data;
     bool disp;
+    bool shh;
     printer(){
         data = "";
         disp = true;
+        shh = false;
     }
     void operator|| (bool b){
         disp = b;
@@ -35,9 +39,20 @@ public:
         return data!="";
     }
     
+    printer operator<< (p_data d){
+        switch (d){
+            case QUIET:
+                shh = true;
+                break;
+            case LOUD:
+                shh = false;
+                break;
+        }
+        return *this;
+    }
     
     printer operator<< (const char* s){
-        if(disp){
+        if(disp && !shh){
             cout << s;
         }else{
             data += s;

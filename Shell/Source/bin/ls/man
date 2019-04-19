@@ -5,7 +5,7 @@ Tokens:
 
 Options:
 [-p] Do not output path
-[-t] Silence tokens
+[-t] Do not output tokens
 [-c] output in collumns
-[-r] recursively display nested directories
-[-n] if using -r, display in one line
+[-r] recursively output nested directories
+[-n] if using -r, output in one line

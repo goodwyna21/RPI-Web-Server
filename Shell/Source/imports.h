@@ -38,6 +38,18 @@ string remove(string &s, string c){
     return ret;
 }
 
+string escNewl(string s){
+    while(s.find('\n',0) != string::npos){
+        s.replace(s.find('\n'),2,"\\n");
+    }
+    return s;
+}
+
+bool valid(string s, int pos){
+    if(pos==0){return true;}
+    return !(s[pos-1]=='\\' && valid(s,pos-1));
+}
+
 template<typename T>
 void join(vector<T> &a, vector<T> b){
     for(int i = 0; i < b.size(); i++){
@@ -51,40 +63,6 @@ vector<T> sub(vector<T> v, unsigned int start){
         ret.push_back(v.at(i));
     }
     return ret;
-}
-vector<string> sep_comm(string inp, vector<char> &opts){
-    vector<string> words;
-    string temp = "";
-    bool inquot = false;
-    for(int i = 0; i < inp.size(); i++){
-        if(inp[i] == '"'){
-            inquot = !inquot;
-            continue;
-        }
-        if(inp[i] == ' ' && !inquot){
-            if(temp[0]=='-'){
-                for(int i = 1; i < temp.size(); i++){
-                    opts.push_back(temp[i]);
-                }
-                temp="";
-                continue;
-            }
-            if(temp!=""){
-                words.push_back(temp);
-                temp="";
-            }
-            continue;
-        }
-        temp+=inp[i];
-    }
-    if(temp[0]=='-'){
-        for(int i = 1; i < temp.size(); i++){
-            opts.push_back(temp[i]);
-        }
-    } else if(temp!=""){
-        words.push_back(temp);
-    }
-    return words;
 }
 
 template<typename T>
@@ -131,16 +109,6 @@ string combine(vector<string> v, const char* join){
         }
     }
     return ret;
-}
-
-string escape(string s){
-    for(int i = 0; i < s.size(); i++){
-        if(s[i]=='/'){
-            s.insert(i,"//");
-            i+=2;
-        }
-    }
-    return s;
 }
 
 #endif /* STRUCTS_H */

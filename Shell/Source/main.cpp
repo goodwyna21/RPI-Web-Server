@@ -1,19 +1,16 @@
 #include "shell.h";
 
 #include <unistd.h>
-printer p;
 
 int main(int argc, char** argv) {
-    shell s;
-    ~s;
-    s % p;
+    shell shl;
 
     chdir("Data");
     string comm;
     while(true){
-        p << !s;
+        cout << !shl;
         getline(cin,comm);
-        s << comm;
+        cout << shl(comm).data;
     }
     return 0;
 }
