@@ -122,66 +122,83 @@ struct shell{
             if(!has<char>(opts,'p')){
                 p << b_on << d->path << b_off << "\n";
             }
-            int cnt = 0;
-            for(vector<dir *>::iterator it = d->dirs.begin(); it != d->dirs.end(); ++it){
-                cnt++;
-                if((cnt > 4 || has<char>(opts,'c')) && it!=d->dirs.begin()){
-                    p << "\n";
-                    cnt = 0;
+            
+            
+            string ret;
+            if(!has<char>(opts,'r')){
+                ret = "";
+                int cnt = 0;
+                for(vector<dir *>::iterator it = d->dirs.begin(); it != d->dirs.end(); ++it){
+                    cnt++;
+                    if((cnt > 4 || has<char>(opts,'c')) && it!=d->dirs.begin()){
+                        ret += "\n";
+                        cnt = 0;
+                    }
+                    ret += "@" + (*it)->name + "  ";
                 }
-                p << (has<char>(opts,'t')?"":"@") << (*it)->name << "  ";
-            }
-            for(vector<file *>::iterator it = d->files.begin(); it != d->files.end(); ++it){
-                cnt++;
-                if(cnt > 4 || has<char>(opts,'c')){
-                    p << "\n";
-                    cnt = 0;
+                for(vector<file *>::iterator it = d->files.begin(); it != d->files.end(); ++it){
+                    cnt++;
+                    if(cnt > 4 || has<char>(opts,'c')){
+                        ret += "\n";
+                        cnt = 0;
+                    }
+                    ret += "!" + (*it)->name + "  ";
                 }
-                p << (has<char>(opts,'t')?"":"!") << (*it)->name << "  ";
+            } else {
+                ret = ((*d)^0);
+                if(has<char>(opts,'n')){
+                    remove(ret,"\n");
+                }
             }
-            p << "\n";
-            return true;
-        }
-        if(comm.at(0)=="lsr"){
-            if(comm.size()<2){
-                p << ((*pos)^0) << "\n";
-                return true;
+            if(has<char>(opts,'t')){
+                remove(ret,"@!");
             }
-            p << ((*((*this)||comm.at(2)))^0) << "\n";
+            p << ret << "\n";
             return true;
         }
         if(comm.at(0)=="pwd"){
-            p << b_on << pos->path << b_off << "\n";
+            p << b_on << pos->path << b_off << "\n ";
             return true;
         }
         if(comm.at(0)=="cd"){
+            bp("cd");
             if(comm.size()<2){
+                throw "cd error";
                 log << "Error: Improper arguments\nExpected like 'cd PATH'\n";
                 return false;
             }
             if(!((*this)-comm.at(1))){
+                bp("cd?");
                 log << "Error: Invalid path '" << comm.at(1) << "'\n";
                 return false;
             }
             return true;
         }
         if(comm.at(0)=="echo"){
-            p << combine(sub<string>(comm,1)," ") << "\n";
+            if(comm.size()>=2){
+                p << comm.at(1);
+            }
+            p << (has<char>(opts,'n')?"":"\n");
             return true;
         }
-        if(comm.at(0)=="svd"){ //save directory: svd [PATH]
+        if(comm.at(0)=="svd"){ //save directory: svd [path] [fname]
             dir * d;
             if(comm.size()<2){
                 d = pos;
-            }else{
-                d = ((*this)||comm.at(2));
+            } else {
+                ((*this)||comm.at(1));
             }
-            string dname = "@" + d->name;
-            string path = dname + ".dir/";
+            string path = "@";
+            if(comm.size()<3){
+                path += d->name;
+            } else {
+                path += comm.at(2);
+            }
+            path += ".dir/";
             system(("mkdir -p " + path + " > /dev/null").c_str());
 
             ofstream wf;
-            wf.open((path + dname + ".tree"));
+            wf.open(d->name + ".tree");
             string text = ((*d)^0);
             for(int i = 0; i < text.size(); i++){
                 if(text[i]=='\t'){
@@ -465,8 +482,14 @@ struct shell{
             }
             var * v = (*this)%=comm.at(1);
             if(v==nullptr){
-                log << "Error: No variable '" << comm.at(0) << "'\n";
-                return false;
+                if(has<char>(opts,'v')){
+                    v = new var;
+                    v->id = comm.at(1);
+                    vars.push_back(v);
+                }else{
+                    log << "Error: No variable '" << comm.at(1) << "'\n";
+                    return false;
+                }
             }
             if(has<char>(opts,'v')){
                 if(!p){
@@ -483,29 +506,26 @@ struct shell{
     
     bool operator<<(string comm){ //parse command string
         if(comm == ""){return false;}
-        //parse redirect (>)
         int redir = comm.find('>');
         int pipe = comm.find('|');
+        int chain = comm.find(';');
         if(redir != string::npos){
-            string c = comm.substr(0,redir);
             p || false;
-            (*this) << c;
+            (*this) << comm.substr(0,redir);
+            p || true;
             string retval;
             p >> retval;
-            c = comm.substr(redir+1,comm.size()-redir);
-            (*this) << ("set " + c + " \"" + retval + "\"");
-            p || true;
-        //parse pipes
+            (*this) << ("set " + comm.substr(redir+1,comm.size()-redir) + " \"" + retval + "\"");
         }else if(pipe != string::npos){
-            string c = comm.substr(0,pipe);
             p || false;
-            (*this) << c;
+            (*this) << comm.substr(0,pipe);
+            p || true;
             string retval;
             p >> retval;
-            p || true;
-            c = comm.substr(pipe+1,comm.size()-pipe);
-            c += " " + retval;
-            (*this) << c;
+            (*this) << (comm.substr(pipe+1,comm.size()-pipe) + " " + retval);
+        }else if(chain != string::npos){
+            (*this) << comm.substr(0,chain);
+            (*this) << comm.substr(chain+1,comm.size()-chain);
         }else{
             vector<char> opts;
             return (*this)(sep_comm(comm, opts),opts);

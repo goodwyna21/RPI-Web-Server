@@ -20,6 +20,24 @@ char byteToChar(bitset<8> b){
     return static_cast<unsigned char>(b.to_ulong());
 }
 
+string remove(string &s, string c){
+    string ret = "";
+    bool clear;
+    for(int i = 0; i < s.size(); i++){
+        clear = true;
+        for(int k = 0; k < c.size(); k++){
+            if(s[i]==c[k]){
+                clear = false;
+            }
+        }
+        if(clear){
+            ret += s[i];
+        }
+    }
+    s=ret;
+    return ret;
+}
+
 template<typename T>
 void join(vector<T> &a, vector<T> b){
     for(int i = 0; i < b.size(); i++){

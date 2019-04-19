@@ -1,1 +1,3 @@
 echo DATA - output DATA
+options:
+[-n] no newline at end
