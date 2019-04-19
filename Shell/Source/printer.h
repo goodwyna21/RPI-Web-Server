@@ -39,7 +39,7 @@ public:
         return data!="";
     }
     
-    printer operator<< (p_data d){
+    printer& operator<< (p_data d){
         switch (d){
             case QUIET:
                 shh = true;
@@ -51,7 +51,7 @@ public:
         return *this;
     }
     
-    printer operator<< (const char* s){
+    printer& operator<< (const char* s){
         if(disp && !shh){
             cout << s;
         }else{
@@ -59,27 +59,27 @@ public:
         }
         return *this;
     }
-    printer operator<< (std::string s){
+    printer& operator<< (std::string s){
         (*this) << s.c_str();
         return (*this);
     }
-    printer operator<< (char s){
+    printer& operator<< (char s){
         (*this) << ("" + s);
         return *this;
     }
-    printer operator<< (int a){
+    printer& operator<< (int a){
         (*this) << to_string(a);
         return *this;
     }
-    printer operator<< (bool b){
+    printer& operator<< (bool b){
         (*this) << (b?"true":"false");
         return *this;
     }
-    printer operator<< (byte b){
+    printer& operator<< (byte b){
         (*this) << b.to_string();
         return *this;
     }
-    printer operator<< (vector<string> v){
+    printer& operator<< (vector<string> v){
         for(vector<string>::iterator it = v.begin(); it!=v.end(); ++it){
             (*this) << (*it) << ", ";
         }

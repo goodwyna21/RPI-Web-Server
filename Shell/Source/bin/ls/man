@@ -1,10 +1,10 @@
-ls [PATH] - output path and contents of current directory or PATH if provided
+ls [PATH] - output contents of current directory or PATH if provided
 Tokens:
 @ - directory
 ! - file
 
 Options:
-[-p] Do not output path
+[-p] output path
 [-t] Do not output tokens
 [-c] output in collumns
 [-r] recursively output nested directories

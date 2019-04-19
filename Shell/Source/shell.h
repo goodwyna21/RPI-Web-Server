@@ -32,18 +32,35 @@ struct ret_val{
         p || false;
     }
     
-    template <typename T>
-    ret_val operator<<(T foo){
-        p << foo;
-        string temp;
-        p >> temp;
-        data += temp;
+    ret_val& operator<< (const char* s){
+        data += s;
         return *this;
     }
-    
-    void operator>>(string &s){
-        s += data;
-        data = "";
+    ret_val& operator<< (std::string s){
+        (*this) << s.c_str();
+        return (*this);
+    }
+    ret_val& operator<< (char s){
+        (*this) << ("" + s);
+        return *this;
+    }
+    ret_val& operator<< (int a){
+        (*this) << to_string(a);
+        return *this;
+    }
+    ret_val& operator<< (bool b){
+        (*this) << (b?"true":"false");
+        return *this;
+    }
+    ret_val& operator<< (byte b){
+        (*this) << b.to_string();
+        return *this;
+    }
+    ret_val& operator<< (vector<string> v){
+        for(vector<string>::iterator it = v.begin(); it!=v.end(); ++it){
+            (*this) << (*it) << ", ";
+        }
+        return *this;
     }
 };
 
@@ -146,6 +163,7 @@ struct shell{
     
     ret_val operator() (vector<string> comm, vector<char> opts){
         ret_val RET;
+        FAIL.data="";
         if(comm.at(0)=="ls"){
             dir * d;
             if(comm.size()<2){
@@ -153,8 +171,8 @@ struct shell{
             }else{
                 d = ((*this)||comm.at(1));
             }
-            if(!has<char>(opts,'p')){
-                RET << b_on << d->path << b_off << "\n";
+            if(has<char>(opts,'p')){
+                RET << d->path << "\n";
             }
             
             
@@ -187,11 +205,11 @@ struct shell{
             if(has<char>(opts,'t')){
                 remove(tmp,"@!");
             }
-            RET << tmp << ((tmp!="\n")?"\n":"");
+            RET << tmp << ((tmp!="")?"\n":"");
             return RET;
         }
         if(comm.at(0)=="pwd"){
-            RET << b_on << pos->path << b_off << "\n ";
+            RET << pos->path << "\n ";
             return RET;
         }
         if(comm.at(0)=="cd"){
@@ -322,28 +340,35 @@ struct shell{
             (*pos) += comm.at(1);
             return RET;
         }
-        if(comm.at(0)=="write"){ //write FNAME DATA
-            if(comm.size() < 3){
-                FAIL << "Error: Improper arguments\nExpected like 'write FNAME TEXT'\n";
+        if(comm.at(0)=="write"){ //write FNAME [DATA]
+            if(comm.size() < 2){
+                FAIL << "Error: Improper arguments\nExpected like 'write FNAME [DATA]'\n";
                 return FAIL;
             }
             file * f = (*pos)|comm.at(1);
             if(f == nullptr){
-                FAIL << "Error: Invalid filename\n";
-                return FAIL;
-            }
-            vector<string>::iterator d_start = comm.begin();
-            ++d_start;
-            ++d_start;
-            string data = "";
-            for(vector<string>::iterator it = d_start; it!=comm.end(); ){
-                data += (*it);
-                ++it;
-                if(it!=comm.end()){
-                    data += " ";
+                if(has<char>(opts,'i')){
+                    (*pos) += comm.at(1);
+                    f = (*pos)|comm.at(1);
+                }else{
+                    FAIL << "Error: Invalid filename\n";
+                    return FAIL;
                 }
             }
-            (*f) << data;
+            if(comm.size() >= 3){
+                (*f) << comm.at(2);
+            }else{
+                string line, inp = "";
+                cout << "Editing " << comm.at(1) << "    Enter `exit` to finish\n";
+                while(true){
+                    cout << ">";
+                    getline(cin, line);
+                    if(line=="exit"){break;}
+                    inp += line + "\n";
+                }
+                (*f) << inp;
+            }
+            
             return RET;
         }
         if(comm.at(0)=="cat"){ //cat FNAME
@@ -423,6 +448,7 @@ struct shell{
                     FAIL << out.data << "in '" << line << "'\n";
                     return FAIL;
                 }
+                RET << out.data;
                 (*f)%=line;
             }while(line!="");
             return RET;
