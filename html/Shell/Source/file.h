@@ -107,10 +107,10 @@ struct file{
         *n = (int)(b.to_ulong());
         return *this;
     }
-    file operator>> (string * s){
-        *s = "";
+    file operator>> (string &s){
+        s = "";
         while(byteToChar(*pos) != ' ' && byteToChar(*pos)!='\n' && pos!=data.end()){
-            *s += byteToChar(*pos);
+            s += byteToChar(*pos);
             (*this) + 1;
         }
         return *this;

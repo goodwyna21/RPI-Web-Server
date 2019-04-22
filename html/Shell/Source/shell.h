@@ -19,17 +19,23 @@ struct var{
 
 struct ret_val{
     string data;
-    printer p;
     bool success;
+    vector<char> spcls;
     ret_val(){
         data = "";
         success = true;
-        p || false;
     }
     ret_val(bool b){ //failure
         data = "";
         success = b;
-        p || false;
+    }
+    
+    ret_val operator+ (ret_val r){
+        ret_val tmp = (*this);
+        tmp.data += r.data;
+        join<char>(tmp.spcls,r.spcls);
+        tmp.success = (tmp.success && r.success);
+        return tmp;
     }
     
     ret_val& operator<< (const char* s){
@@ -170,6 +176,10 @@ struct shell{
                 d = pos;
             }else{
                 d = ((*this)||comm.at(1));
+            }
+            if(d == nullptr){
+                FAIL << "Error: Invalid path '" << comm.at(1) << "'\n";
+                return FAIL;
             }
             if(has<char>(opts,'p')){
                 RET << d->path << "\n";
@@ -453,6 +463,30 @@ struct shell{
             }while(line!="");
             return RET;
         }
+        
+        if(comm.at(0)=="grep"){
+            if(comm.size() < 3){
+                FAIL << "Error: Improper arguments\nExpected like 'grep PATTERN string'\n";
+                return FAIL;
+            }
+            string s = comm.at(2);
+            if(has<char>(opts,'f')){
+                file * f = ((*this)|s);
+                if(f == nullptr){
+                    FAIL << "Error: Invalid file '" << s << "'\n";
+                    return FAIL;
+                }
+                (*f) >> s;
+            }
+            vector<string> lines = split(s,(has<char>(opts,'w')?"\n ":"\n"));
+            for(vector<string>::iterator it = lines.begin(); it!=lines.end(); ++it){
+                if(it->find(comm.at(1)) != string::npos){
+                    RET << (*it) << "\n";
+                }
+            }
+            return RET;
+        }
+        
         if(comm.at(0)=="ldf"){ //load file
             if(comm.size() < 3){
                 FAIL << "Error: Improper arguments\nExpected like 'ldf FNAME dataFile'\n";
@@ -550,18 +584,33 @@ struct shell{
         int redir = comm.find('>');
         int pipe = comm.find('|');
         int chain = comm.find(';');
+        int multi = comm.find('%');
         if(redir != string::npos){
             ret_val ret = (*this)(comm.substr(0,redir));
             if(!ret.success){return ret;}
-            return ((*this)(("set " + comm.substr(redir+1,comm.size()-redir) + " \"" + ret.data + "\"")));
+            ret = ret + (*this)(("set " + comm.substr(redir+1,comm.size()-redir) + " \"" + ret.data + "\""));
+            return ret;
         }else if(pipe != string::npos){
             ret_val ret = ((*this)(comm.substr(0,pipe)));
             if(!ret.success){return ret;}
-            return ((*this)((comm.substr(pipe+1,comm.size()-pipe) + " " + ret.data)));
+            ret = ((*this)((comm.substr(pipe+1,comm.size()-pipe) + " " + ret.data)));
+            return ret;
         }else if(chain != string::npos){
             ret_val ret = (*this)(comm.substr(0,chain));
             if(!ret.success){return ret;}
-            return ((*this)(comm.substr(chain+1,comm.size()-chain)));
+            ret = ret + ((*this)(comm.substr(chain+1,comm.size()-chain)));
+            return ret;
+        }else if(multi != string::npos){
+            ret_val ret;
+            int r = stoi(comm.substr(multi+1,comm.find(' ',multi)-(multi+1)));
+            for(int i = 0; i < r; i++){
+                ret = ret + (*this)(comm.substr(0,multi));
+                if(!ret.success){
+                    return ret;
+                }
+            }
+            return ret;
+            
         }else{
             vector<char> opts;
             return (*this)(this->sep_comm(comm, opts),opts);

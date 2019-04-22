@@ -1,0 +1,4 @@
+grep PATTERN string - Output all lines containing PATTERN in string
+options:
+[-f] read contents of file instead of string (string is treated as path to file)
+[-w] search for words with pattern instead of lines

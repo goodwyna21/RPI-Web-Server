@@ -94,6 +94,27 @@ vector<string> split(string inp, char sep){
     return words;
 }
 
+vector<string> split(string inp, string sep){
+    vector<string> words;
+    string temp = "";
+    for(int i = 0; i < inp.size(); i++){
+        for(int k = 0; k < sep.size(); k++){
+            if(inp[i]==sep[i]){
+                if(temp!=""){
+                    words.push_back(temp);
+                    temp="";
+                }
+                continue;
+            }
+        }
+        temp+=inp[i];
+    }
+    if(temp!=""){
+        words.push_back(temp);
+    }
+    return words;
+}
+
 string combine(vector<string> v, const char* join){
     if(v.size()==0){
         return "";
