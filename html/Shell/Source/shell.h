@@ -1,7 +1,7 @@
 #ifndef SHELL_H
 #define SHELL_H
 
-#include "printer.h";
+#include "printer.h"
 
 struct var{
     string id;
@@ -72,7 +72,6 @@ struct ret_val{
 
 ret_val FAIL(false);
 
-vector<string> sep_comm(string s, vector<char> &opts); //forward declaration for neatness
 
 struct shell{
     string user;
@@ -257,7 +256,7 @@ struct shell{
             system(("mkdir -p " + path + " > /dev/null").c_str());
 
             ofstream wf;
-            wf.open(path + d->name + ".tree");
+            wf.open(path + "@" + d->name + ".tree");
             string text = ((*d)^0);
             for(int i = 0; i < text.size(); i++){
                 if(text[i]=='\t'){
@@ -286,7 +285,7 @@ struct shell{
             string fname = comm.at(1).substr(0,(comm.at(1).size()-4));
             ifstream tree(fname + ".dir/" + fname + ".tree");
             if(tree.fail()){
-                FAIL << "Error: Invalid file '" << comm.at(1) << "'\n";
+                FAIL << "Error: Invalid file '" << fname << " " << comm.at(1) << "'\n";
                 return FAIL;
             }
 
@@ -656,7 +655,7 @@ struct shell{
     }
     
     string operator!(){
-        return (cyan + user + red + "@" + pos->name + cyan + "$ " + black);
+        return (/*cyan +*/user/*+ red*/ + "@" + pos->name /*+cyan*/ + "$ "/*+ black*/);
     }
 };
 

@@ -8,7 +8,7 @@ int main(int argc, char *argv[]){
 		return 1;
 	}
 	
-	cout << !shl;
+	cout << !shl << argv[1] << "\n";
 	ret = shl(argv[1]);
 	cout << ret.data << "\n";
 	shl("svd / root");
