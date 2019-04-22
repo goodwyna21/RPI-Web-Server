@@ -530,7 +530,7 @@ struct shell{
             }
             var * v = ((*this)%=comm.at(1));
             if(v==nullptr){
-		if(has<char>(opts,'i'){
+		if(has<char>(opts,'i')){
 	       	    v = new var;
 		    v->id = comm.at(1);
 		    vars.push_back(v);
