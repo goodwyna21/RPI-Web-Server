@@ -1,7 +1,5 @@
-av VARNAME - access variable VARNAME
+av VAR - output value of var
 
-returns value of VARNAME
-
-Options:
-[-v] if silent buffer has data, write it to VARNAME, and show no output
-[-n] escape all '\n' characters from text
+options:
+[-v] create VAR if it doesn't exist
+[-n] escape newlines in VAR

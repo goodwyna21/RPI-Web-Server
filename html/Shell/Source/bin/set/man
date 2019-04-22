@@ -1,0 +1,3 @@
+set VAR VALUE - set value of VAR to VALUE
+options:
+[-i] Create VAR if it doesn't already exist

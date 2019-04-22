@@ -1,0 +1,5 @@
+write PATH [text] - write data to file at PATH
+If no text option provided a multiline text input will apear
+
+Options:
+[-i] create file at PATH if none exists

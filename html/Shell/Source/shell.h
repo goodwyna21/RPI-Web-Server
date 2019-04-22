@@ -235,7 +235,7 @@ struct shell{
             if(comm.size()<2){
                 d = pos;
             } else {
-                ((*this)||comm.at(1));
+                d = ((*this)||comm.at(1));
             }
             string path = "@";
             if(comm.size()<3){
@@ -247,7 +247,7 @@ struct shell{
             system(("mkdir -p " + path + " > /dev/null").c_str());
 
             ofstream wf;
-            wf.open(d->name + ".tree");
+            wf.open(path + d->name + ".tree");
             string text = ((*d)^0);
             for(int i = 0; i < text.size(); i++){
                 if(text[i]=='\t'){
@@ -496,9 +496,14 @@ struct shell{
             }
             var * v = ((*this)%=comm.at(1));
             if(v==nullptr){
-                v = new var;
-                v->id = comm.at(1);
-                vars.push_back(v);
+		if(has<char>(opts,'i'){
+	       	    v = new var;
+		    v->id = comm.at(1);
+		    vars.push_back(v);
+		}else{
+		    FAIL << "Error: No var " << comm.at(1) << "\n";
+		    return FAIL;
+		}
             }
 
             (v->text) = comm.at(2);
@@ -507,13 +512,6 @@ struct shell{
         if(comm.at(0)=="vars"){
             for(vector<var *>::iterator it=vars.begin(); it!=vars.end(); ++it){
                 RET << ((*it)->id + " : " + escNewl((*it)->text) + "\n");
-            }
-            return RET;
-        }
-        if(comm.at(0)=="sb"){
-            RET << escNewl(print.data) << ((print.data.size()>0)?"\n":"");
-            if(has<char>(opts,'f')){
-                print.data = "";
             }
             return RET;
         }
@@ -533,18 +531,13 @@ struct shell{
                     return FAIL;
                 }
             }
-            if(has<char>(opts,'v')){
-                if(!print){
-                    print >> v->text;
-                }
-            }
+            
             string tmp=v->text;
             if(has<char>(opts,'n')){
                 tmp = escNewl(tmp);
             }
-            if(!has<char>(opts,'v')){
-                RET << tmp << (((tmp[tmp.size()-1])!='\n')?"\n":"");
-            }
+	    RET << tmp << (((tmp[tmp.size()-1])!='\n')?"\n":"");
+            
             return RET;
         }
         
